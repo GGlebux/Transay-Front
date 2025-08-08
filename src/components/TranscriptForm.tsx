@@ -55,6 +55,17 @@ export default function TranscriptForm({
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
+
+    if (
+      !engName.trim() ||
+      !gender.trim() ||
+      raiseReasons.length === 0 ||
+      lowerReasons.length === 0
+    ) {
+      alert("Заполните все обязательные поля!");
+      return;
+    }
+
     setLoading(true); // 🔹 начинаем загрузку
 
     try {

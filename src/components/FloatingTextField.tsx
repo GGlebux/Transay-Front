@@ -11,6 +11,7 @@ type FloatingProps = {
   error?: string;
   success?: string;
   options?: { value: string; label: string }[]; // только для select
+  
 };
 
 // --- Floating Input ---

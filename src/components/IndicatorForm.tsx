@@ -19,6 +19,7 @@ export default function IndicatorForm({ engName, setEngName }: Props) {
   const [units, setUnits] = useState<Units>([]);
   const [minAge, setMinAge] = useState({ years: "", months: "", days: "" });
   const [maxAge, setMaxAge] = useState({ years: "", months: "", days: "" });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     axios
@@ -37,15 +38,28 @@ export default function IndicatorForm({ engName, setEngName }: Props) {
     setMaxAge({ years: "", months: "", days: "" });
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    axios
-      .post(API.INDICATORS, {
+    if (
+      !engName.trim() ||
+      !rusName.trim() ||
+      !unit.trim() ||
+      !gender.trim() ||
+      minValue === "" ||
+      maxValue === ""
+    ) {
+      alert("Заполните все обязательные поля!");
+      return;
+    }
+    setLoading(true);
+
+    try {
+      await axios.post(API.INDICATORS, {
         engName,
         rusName,
         gender,
-        gravid,
+        isGravid: gravid,
         minAge: {
           years: Number(minAge.years || 0),
           months: Number(minAge.months || 0),
@@ -59,12 +73,19 @@ export default function IndicatorForm({ engName, setEngName }: Props) {
         minValue: Number(minValue),
         maxValue: Number(maxValue),
         units: unit,
-      })
-      .then(() => alert("Данные успешно отправлены!"))
-      .catch((err) => {
-        console.error(err);
-        alert("Ошибка при отправке данных");
       });
+      alert("Данные успешно отправлены!");
+    } catch (err: any) {
+      console.error(err);
+      const errorMsg =
+        err.response?.data?.message ||
+        err.response?.data ||
+        err.message ||
+        "Неизвестная ошибка";
+      alert(`Ошибка при отправке данных: ${errorMsg}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -184,10 +205,17 @@ export default function IndicatorForm({ engName, setEngName }: Props) {
       />
 
       <div className="btn-container">
-        <button type="button" className="btn-clear" onClick={resetForm}>
+        <button
+          type="button"
+          className="btn-clear"
+          onClick={resetForm}
+          disabled={loading} // чтобы очистка тоже не ломала во время запроса
+        >
           Очистить
         </button>
-        <button type="submit">Отправить</button>
+        <button type="submit" disabled={loading}>
+          {loading ? "Отправка..." : "Отправить"}
+        </button>
       </div>
     </form>
   );
