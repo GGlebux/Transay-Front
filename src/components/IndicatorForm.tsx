@@ -48,12 +48,12 @@ export default function IndicatorForm({ engName, setEngName }: Props) {
         gravid,
         minAge: {
           years: Number(minAge.years || 0),
-          month: Number(minAge.months || 0),
+          months: Number(minAge.months || 0),
           days: Number(minAge.days || 0),
         },
         maxAge: {
           years: Number(maxAge.years || 0),
-          month: Number(maxAge.months || 0),
+          months: Number(maxAge.months || 0),
           days: Number(maxAge.days || 0),
         },
         minValue: Number(minValue),
