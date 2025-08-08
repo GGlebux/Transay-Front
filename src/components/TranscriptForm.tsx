@@ -33,13 +33,7 @@ export default function TranscriptForm({
       .catch(console.error);
   }, []);
 
-  const handleSelect = (type: "raise" | "lower", id: number) => {
-    const r = allReasons.find((r) => r.id === id);
-    if (!r) return;
-    const list = type === "raise" ? raiseReasons : lowerReasons;
-    const setter = type === "raise" ? setRaiseReasons : setLowerReasons;
-    if (!list.some((x) => x.id === id)) setter([...list, r]);
-  };
+
 
   const handleRemove = (type: "raise" | "lower", id: number) => {
     const list = type === "raise" ? raiseReasons : lowerReasons;
