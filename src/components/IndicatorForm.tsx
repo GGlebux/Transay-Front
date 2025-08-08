@@ -28,8 +28,6 @@ export default function IndicatorForm({ engName, setEngName }: Props) {
   }, []);
 
   const resetForm = () => {
-    setEngName("");
-    setRusName("");
     setUnit("");
     setGender("");
     setGravid(false);

@@ -46,7 +46,6 @@ export default function TranscriptForm({
   };
 
   const resetForm = () => {
-    setEngName("");
     setGender("");
     setRaiseReasons([]);
     setLowerReasons([]);
