@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import axios from "axios";
 import { FloatingTextInput, FloatingSelect } from "./FloatingTextField";
-import { API } from "../apiConfig"; // импорт API
+import { API } from "../apiConfig";
 
 export default function TranscriptForm({
   engName,
@@ -21,6 +21,7 @@ export default function TranscriptForm({
     { id: number; name: string }[]
   >([]);
   const [gender, setGender] = useState("");
+  const [loading, setLoading] = useState(false); // 🔹 состояние загрузки
 
   useEffect(() => {
     axios
@@ -46,22 +47,30 @@ export default function TranscriptForm({
   };
 
   const resetForm = () => {
+    setEngName("");
     setGender("");
     setRaiseReasons([]);
     setLowerReasons([]);
   };
 
-  const onSubmit = (e: FormEvent) => {
+  const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    axios
-      .post(API.TRANSCRIPTS, {
+    setLoading(true); // 🔹 начинаем загрузку
+
+    try {
+      await axios.post(API.TRANSCRIPTS, {
         name: engName,
         gender,
         fallsIds: lowerReasons.map((r) => r.id),
         raisesIds: raiseReasons.map((r) => r.id),
-      })
-      .then(() => alert("Данные успешно отправлены!"))
-      .catch(console.error);
+      });
+      alert("Данные успешно отправлены!");
+    } catch (err) {
+      console.error(err);
+      alert("Ошибка при отправке данных");
+    } finally {
+      setLoading(false); // 🔹 заканчиваем загрузку
+    }
   };
 
   return (
@@ -132,10 +141,17 @@ export default function TranscriptForm({
       </div>
 
       <div className="btn-container">
-        <button type="button" className="btn-clear" onClick={resetForm}>
+        <button
+          type="button"
+          className="btn-clear"
+          onClick={resetForm}
+          disabled={loading} // 🔹 блокировка при загрузке
+        >
           Очистить
         </button>
-        <button type="submit">Отправить</button>
+        <button type="submit" disabled={loading}>
+          {loading ? "Отправка..." : "Отправить"}
+        </button>
       </div>
     </form>
   );
