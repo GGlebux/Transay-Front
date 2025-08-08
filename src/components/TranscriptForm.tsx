@@ -53,10 +53,7 @@ export default function TranscriptForm({
 
     if (
       !engName.trim() ||
-      !gender.trim() ||
-      raiseReasons.length === 0 ||
-      lowerReasons.length === 0
-    ) {
+      !gender.trim()) {
       alert("Заполните все обязательные поля!");
       return;
     }
