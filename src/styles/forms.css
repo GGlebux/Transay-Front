@@ -255,3 +255,60 @@ select {
 .age-input-group .text-field {
   flex: 1;
 }
+
+
+
+
+
+.multi-select {
+  position: relative;
+  width: 300px;
+  user-select: none;
+  color: #bdbdbd;
+  width: 100%;
+}
+
+.multi-select__label {
+  display: block;
+  margin: 0 0 16px 0;
+  font-weight: 600;
+  color: #03a9f4;
+}
+
+.multi-select__input {
+  width: 100%;
+  padding: 8px 10px;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.multi-select__dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 2px solid #ccc;
+  height: 400px;
+  overflow-y: auto;
+  border-radius: 0 0 4px 4px;
+  z-index: 1000;
+}
+
+.multi-select__option {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.multi-select__option input[type="checkbox"] {
+  margin-right: 10px;
+}
+
+.multi-select__no-options {
+  padding: 8px 10px;
+  color: #999;
+  font-style: italic;
+}

@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import axios from "axios";
 import { FloatingTextInput, FloatingSelect } from "./FloatingTextField";
 import { API } from "../apiConfig";
+import { MultiSelectWithSearch } from "./MultiSelectWithSearch";
 
 export default function TranscriptForm({
   engName,
@@ -109,42 +110,39 @@ export default function TranscriptForm({
         ]}
       />
 
-      <FloatingSelect
-        id="raise-select"
-        label="Причины повышения"
-        value=""
-        onChange={(e) => handleSelect("raise", Number(e.target.value))}
-        options={allReasons.map((r) => ({
-          value: String(r.id),
-          label: r.name,
-        }))}
-      />
-      <div className="tag-container">
-        {raiseReasons.map((r) => (
-          <span key={r.id} className="tag">
-            {r.name}
-            <button type="button" onClick={() => handleRemove("raise", r.id)}>
-              ×
-            </button>
-          </span>
-        ))}
-      </div>
-
-      <FloatingSelect
-        id="lower-select"
+      <MultiSelectWithSearch
         label="Причины понижения"
-        value=""
-        onChange={(e) => handleSelect("lower", Number(e.target.value))}
-        options={allReasons.map((r) => ({
-          value: String(r.id),
-          label: r.name,
-        }))}
+        options={allReasons}
+        selected={lowerReasons.map((r) => r.id)}
+        onChange={(ids) => {
+          setLowerReasons(allReasons.filter((r) => ids.includes(r.id)));
+        }}
       />
       <div className="tag-container">
         {lowerReasons.map((r) => (
           <span key={r.id} className="tag">
             {r.name}
             <button type="button" onClick={() => handleRemove("lower", r.id)}>
+              ×
+            </button>
+          </span>
+        ))}
+      </div>
+
+      <MultiSelectWithSearch
+        label="Причины повышения"
+        options={allReasons}
+        selected={raiseReasons.map((r) => r.id)}
+        onChange={(ids) => {
+          setRaiseReasons(allReasons.filter((r) => ids.includes(r.id)));
+        }}
+      />
+
+      <div className="tag-container">
+        {raiseReasons.map((r) => (
+          <span key={r.id} className="tag">
+            {r.name}
+            <button type="button" onClick={() => handleRemove("raise", r.id)}>
               ×
             </button>
           </span>
