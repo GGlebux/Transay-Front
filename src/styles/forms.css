@@ -1,0 +1,245 @@
+/* --- Общие reset и контейнер --- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Убрать стрелки у number input */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+
+
+
+h2, h1 {
+  margin: .5rem auto;
+  color: rgb(43, 44, 44);
+}
+
+
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  background-color: #f0f8ff;
+}
+.container {
+  display: flex;
+  gap: 1rem;
+  padding: 2rem 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* --- Карточка формы --- */
+.form-card {
+  background: white;
+  flex: 1 1 320px;
+  max-width: 460px;
+  padding: 1.2rem;
+  border-radius: 1rem;
+  box-shadow: 0 0 12px rgba(0, 51, 102, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+/* --- Плавающая метка --- */
+.text-field {
+  position: relative;
+  margin: 0.45rem 0 0.45rem 0;
+}
+.text-field__input {
+  width: 100%;
+  padding: 1.6rem 0.75rem 0.75rem 0.75rem;
+  font-size: 1rem;
+  border: 1px solid #bdbdbd;
+  border-radius: 0.25rem;
+  outline: none;
+}
+.text-field__input::placeholder {
+  color: transparent;
+}
+.text-field__label {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: white;
+  padding: 0 0.25rem;
+  color: gray;
+  font-size: 1rem;
+  pointer-events: none;
+  transition: transform 0.15s ease-in-out, font-size 0.15s ease-in-out;
+}
+.text-field__input:focus + .text-field__label,
+.text-field__input:not(:placeholder-shown) + .text-field__label {
+  transform: translateY(-1.5rem);
+  font-size: 0.85rem;
+  color: #03a9f4;
+}
+
+
+
+.age-row {
+  display: flex;
+  gap: 1rem;
+  color: rgb(105, 107, 107);
+}
+
+.age-row label {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  
+}
+
+.form-label{
+  color: rgb(105, 107, 107);
+}
+
+.age-row input[type="number"] {
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #bdbdbd;
+  border-radius: 0.25rem;
+  outline: none;
+  margin-top: 0.25rem;
+}
+
+
+
+/* --- Кнопки --- */
+button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 0.7rem 1.5rem;
+  font-size: 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  max-width: 180px;
+  width: 100%;
+  align-self: center;
+  transition: background 0.3s ease;
+
+}
+button:hover {
+  background-color: #0056b3;
+}
+button.btn-clear {
+  background-color: #dc3545;
+
+}
+button.btn-clear:hover {
+  background-color: #a71d2a;
+}
+
+.btn-container {
+  display: flex;
+  flex-direction: row-reverse;
+  height: 100%;
+  justify-content: space-between;
+}
+
+.btn-container button {
+    margin-top: auto;
+}
+
+/* --- Селекты и чекбоксы --- */
+select {
+  width: 100%;
+  max-width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding: 0.75rem;
+  border: 3px solid #ccc;
+  border-radius: 0.25rem;
+  font-size: 1rem;
+  background-color: #fff;
+  background-image: url("data:image/svg+xml,%3csvg fill='gray' height='16' viewBox='0 0 24 24' width='16' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  
+}
+.checkbox label {
+  
+  color: #03a9f4;
+  font-size: 1rem;
+}
+
+.checkbox input {
+  width: 20px;
+  height: 20px;
+  accent-color: #03a9f4;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  border: 2px solid #bdbdbd;
+  border-radius: 4px;
+  background-color: white;
+  cursor: pointer;
+  position: relative;
+}
+
+.checkbox input:checked::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 6px;
+  width: 5px;
+  height: 10px;
+  border: solid #03a9f4;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* --- Тэги выбранных причин --- */
+.tag-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.tag {
+  background-color: #e6f0ff;
+  border: 1px solid #007bff;
+  color: #003366;
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  font-size: 1rem;
+}
+.tag button {
+  width: 18px;
+  height: 18px;
+  background: none;
+  padding: 0;
+  border: none;
+  margin-left: 4px;
+  margin-bottom: 2px;
+  font-size: 1.3rem;
+  color: #007bff;
+  cursor: pointer;
+}
+
+.age-input-group {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.age-input-group .text-field {
+  flex: 1;
+}
