@@ -107,7 +107,7 @@ export default function IndicatorForm({ engName, setEngName }: Props) {
         label="Рус название"
         value={rusName}
         onChange={(e) => {
-          const filtered = e.target.value.replace(/[^а-яёА-ЯЁ\s]/g, "");
+          const filtered = e.target.value.replace(/[^а-яёА-ЯЁa-zA-Z\s]/g, "");
           setRusName(filtered);
         }}
       />
