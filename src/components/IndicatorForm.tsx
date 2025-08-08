@@ -17,8 +17,8 @@ export default function IndicatorForm({ engName, setEngName }: Props) {
   const [minValue, setMinValue] = useState("");
   const [maxValue, setMaxValue] = useState("");
   const [units, setUnits] = useState<Units>([]);
-  const [minAge, setMinAge] = useState({ years: "", month: "", days: "" });
-  const [maxAge, setMaxAge] = useState({ years: "", month: "", days: "" });
+  const [minAge, setMinAge] = useState({ years: "", months: "", days: "" });
+  const [maxAge, setMaxAge] = useState({ years: "", months: "", days: "" });
 
   useEffect(() => {
     axios
@@ -33,8 +33,8 @@ export default function IndicatorForm({ engName, setEngName }: Props) {
     setGravid(false);
     setMinValue("");
     setMaxValue("");
-    setMinAge({ years: "", month: "", days: "" });
-    setMaxAge({ years: "", month: "", days: "" });
+    setMinAge({ years: "", months: "", days: "" });
+    setMaxAge({ years: "", months: "", days: "" });
   };
 
   const handleSubmit = (e: FormEvent) => {
@@ -48,12 +48,12 @@ export default function IndicatorForm({ engName, setEngName }: Props) {
         gravid,
         minAge: {
           years: Number(minAge.years || 0),
-          month: Number(minAge.month || 0),
+          month: Number(minAge.months || 0),
           days: Number(minAge.days || 0),
         },
         maxAge: {
           years: Number(maxAge.years || 0),
-          month: Number(maxAge.month || 0),
+          month: Number(maxAge.months || 0),
           days: Number(maxAge.days || 0),
         },
         minValue: Number(minValue),
@@ -130,8 +130,8 @@ export default function IndicatorForm({ engName, setEngName }: Props) {
           id="min-age-months"
           label="Месяцы"
           type="number"
-          value={minAge.month}
-          onChange={(e) => setMinAge({ ...minAge, month: e.target.value })}
+          value={minAge.months}
+          onChange={(e) => setMinAge({ ...minAge, months: e.target.value })}
         />
         <FloatingTextInput
           id="min-age-days"
@@ -155,8 +155,8 @@ export default function IndicatorForm({ engName, setEngName }: Props) {
           id="max-age-months"
           label="Месяцы"
           type="number"
-          value={maxAge.month}
-          onChange={(e) => setMaxAge({ ...maxAge, month: e.target.value })}
+          value={maxAge.months}
+          onChange={(e) => setMaxAge({ ...maxAge, months: e.target.value })}
         />
         <FloatingTextInput
           id="max-age-days"
