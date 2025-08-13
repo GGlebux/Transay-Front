@@ -103,14 +103,16 @@ export default function IndicatorForm({ engName, setEngName }: Props) {
       />
 
       <FloatingTextInput
-        id="ind-rus"
-        label="Рус название"
-        value={rusName}
-        onChange={(e) => {
-          const filtered = e.target.value.replace(/[^а-яёА-ЯЁa-zA-Z\s]/g, "");
-          setRusName(filtered);
-        }}
-      />
+  id="ind-rus"
+  label="Рус название"
+  value={rusName}
+  onChange={(e) => {
+    // Убираем только латиницу, оставляем кириллицу, пробелы и любые спецсимволы
+    const filtered = e.target.value.replace(/[a-zA-Z]/g, "");
+    setRusName(filtered);
+  }}
+/>
+
 
       <FloatingSelect
         id="ind-unit"
