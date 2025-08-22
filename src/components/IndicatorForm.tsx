@@ -44,7 +44,6 @@ export default function IndicatorForm({ engName, setEngName }: Props) {
     if (
       !engName.trim() ||
       !rusName.trim() ||
-      !unit.trim() ||
       !gender.trim() ||
       minValue === "" ||
       maxValue === ""
