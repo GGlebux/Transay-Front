@@ -74,9 +74,14 @@ export function FloatingSelect({
         className={`text-field__input ${inputClass}`}
       >
         <option value=""> </option>
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>{o.label}</option>
-        ))}
+        {options.map((o, i) => (
+  <option
+    key={`${String((o as any).value)}-${i}`}
+    value={String((o as any).value)}
+  >
+    {String((o as any).label)}
+  </option>
+))}
       </select>
       <label htmlFor={id} className="text-field__label">{label}</label>
       {message && <div className={`text-field__message ${messageClass}`}>{message}</div>}

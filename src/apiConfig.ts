@@ -7,4 +7,5 @@ export const API = {
   INDICATOR_UNITS: `${BASE_URL}/indicators/units`,
   TRANSCRIPTS: `${BASE_URL}/transcripts`,
   REASONS: `${BASE_URL}/reasons`,
+  PEOPLE: `${BASE_URL}/people`,
 };

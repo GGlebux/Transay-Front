@@ -1,16 +1,20 @@
-import { useState } from 'react';
-import IndicatorForm from './IndicatorForm';
-import TranscriptForm from './TranscriptForm';
+import { useState } from "react";
+import type { ReactNode } from "react";
+import IndicatorForm from "./IndicatorForm";
+import TranscriptForm from "./TranscriptForm";
 
-function FormsWrapper() {
-  const [engName, setEngName] = useState('');
+type FormsWrapperProps = {
+  children?: ReactNode;
+};
+
+export default function FormsWrapper({ children }: FormsWrapperProps) {
+  const [engName, setEngName] = useState("");
 
   return (
-    <>
+    <div className="forms-wrapper">
+      {children}
       <TranscriptForm engName={engName} setEngName={setEngName} />
       <IndicatorForm engName={engName} setEngName={setEngName} />
-    </>
+    </div>
   );
 }
-
-export default FormsWrapper;

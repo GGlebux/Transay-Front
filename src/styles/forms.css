@@ -22,9 +22,8 @@ h2, h1 {
 
 
 #root {
-  max-width: 1280px;
+
   margin: 0 auto;
-  padding: 0 2rem;
   background-color: #f0f8ff;
 }
 .container {

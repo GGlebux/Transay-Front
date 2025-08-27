@@ -114,12 +114,13 @@ export default function IndicatorForm({ engName, setEngName }: Props) {
 
 
       <FloatingSelect
-        id="ind-unit"
-        label="Единицы измерения"
-        value={unit}
-        onChange={(e) => setUnit(e.target.value)}
-        options={units.map((u) => ({ value: u, label: u }))}
-      />
+  id="ind-unit"
+  label="Единицы измерения"
+  value={unit}
+  onChange={(e) => setUnit(e.target.value)}
+  options={units.map((u: any) => ({ value: String(u.id), label: u.name }))}
+/>
+
 
       <FloatingSelect
         id="ind-gender"

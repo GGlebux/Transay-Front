@@ -1,0 +1,120 @@
+/* Сброс базовых отступов */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Основные цвета */
+:root {
+  --primary-color: #007bff; /* синий основной цвет */
+  --background-color: #F3F4F6; /* светлый фон */
+  --sidebar-bg: #ffffff;
+  --header-bg: #ffffff;
+  --border-color: #CBD5E1; /* светло-серая граница */
+  --text-color: #1F2937; /* темно-серый текст */
+  --hover-bg: #E0E7FF; /* легкий синий hover */
+}
+
+
+/* Общий контейнер layout */
+.layout {
+  display: flex;
+  height: 100vh;
+  background-color: var(--background-color);
+}
+
+.forms-wrapper{
+  display: flex;
+  margin: 0 auto;
+  justify-content: space-around;
+  flex-wrap: wrap;
+}
+
+/* Сайдбар */
+.sidebar {
+  width: 220px;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  transition: background 0.3s;
+}
+
+.sidebar__logo {
+  font-weight: bold;
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  color: var(--primary-color);
+}
+
+.sidebar ul {
+  list-style: none;
+}
+
+.sidebar li {
+  margin: 0.5rem 0;
+}
+
+.sidebar a {
+  display: block;
+  text-decoration: none;
+  color: var(--text-color);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.sidebar a.active {
+  background-color: var(--hover-bg);
+  color: var(--primary-color);
+}
+
+
+.sidebar a:hover {
+  background-color: var(--hover-bg);
+  color: var(--primary-color);
+}
+
+/* Header */
+.header {
+  height: 60px;
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+/* Основная область контента */
+.layout__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.layout__content {
+  padding: 1.5rem;
+  flex: 1;
+  background-color: var(--background-color);
+  overflow-y: auto;
+}
+
+/* Мелкие стили для аккуратности */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--primary-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}

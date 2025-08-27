@@ -1,0 +1,177 @@
+.people-container {
+  padding: 1rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.people-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.people-search {
+  padding: 0.5rem 1rem;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  width: 250px;
+  box-sizing: border-box;
+}
+
+.people-add-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  background-color: #03a9f4;
+  color: #fff;
+  font-size: 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.people-add-btn:hover {
+  background-color: #0288d1;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.people-table {
+  width: 100%;
+  min-width: 600px;
+  border-collapse: collapse;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  box-sizing: border-box;
+  color: black;
+}
+
+.people-table th,
+.people-table td {
+  border: 1px solid #CBD5E1;
+  padding: 0.5rem 1rem;
+  text-align: left;
+}
+
+.people-table th {
+  background-color: #1E40AF;
+  color: #fff;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  border-radius: 6px 6px 0 0;
+}
+
+.people-table tr:nth-child(even) {
+  background-color: #F3F4F6;
+}
+
+.people-table tr:hover {
+  background-color: #E0E7FF;
+}
+
+.edit-btn, .delete-btn {
+  border: none;
+  
+  background: none;
+  cursor: pointer;
+  color: black;
+  font-size: 1.5rem;
+  width: 1px;
+  height: 1px;
+  transition: color 0.2s;
+}
+
+.edit-btn {
+ color: #ffc905;
+ margin-right: 10px;
+}
+.edit-btn:hover {
+ 
+  background: none;
+}
+
+.delete-btn {
+  color: #f44336;
+}
+.delete-btn:hover {
+
+  background: none;
+}
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  z-index: 1000;
+}
+
+.modal {
+  background: #fff;
+  padding: 1.5rem;
+  color: black;
+  border-radius: 8px;
+  min-width: 300px;
+  max-width: 400px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+.modal label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.modal input, .modal select {
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  margin-bottom: 0.8rem;
+  border-radius: 6px;
+  border: 1px solid #CBD5E1;
+  box-sizing: border-box;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.modal-actions button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.modal-actions button:first-child {
+  background-color: #03a9f4;
+  color: white;
+}
+
+.modal-actions button:first-child:hover {
+  background-color: #0288d1;
+}
+
+.modal-actions button:last-child {
+  background-color: #ddd;
+}
+
+.modal-actions button:last-child:hover {
+  background-color: #bbb;
+}
