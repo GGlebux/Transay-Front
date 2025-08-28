@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import axios from "axios";
-import { FloatingTextInput, FloatingSelect } from "./FloatingTextField";
-import { API } from "../apiConfig";
-import { MultiSelectWithSearch } from "./MultiSelectWithSearch";
+import { FloatingTextInput, FloatingSelect } from "../Trans_Indicat/FloatingTextField";
+import { API } from "../../apiConfig";
+import { MultiSelectWithSearch } from "../Trans_Indicat/MultiSelectWithSearch";
 
 export default function TranscriptForm({
   engName,

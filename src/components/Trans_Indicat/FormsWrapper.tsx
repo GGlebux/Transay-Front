@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
-import IndicatorForm from "./IndicatorForm";
-import TranscriptForm from "./TranscriptForm";
+import IndicatorForm from "../Trans_Indicat/IndicatorForm";
+import TranscriptForm from "../Trans_Indicat/TranscriptForm";
 
 type FormsWrapperProps = {
   children?: ReactNode;

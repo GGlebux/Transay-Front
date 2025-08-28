@@ -1,37 +1,56 @@
-import { Link, useLocation } from "react-router-dom";
-import '../../styles/layout.css';
+import { NavLink, useLocation } from "react-router-dom";
+import "../../styles/layout.css";
 
 export default function Sidebar() {
-  const location = useLocation(); // Получаем текущий путь
+  const location = useLocation();
+  const isForms = location.pathname.startsWith("/forms");
 
   return (
     <aside className="sidebar">
       <div className="sidebar__logo">LOGO</div>
+
       <nav>
         <ul>
           <li>
-            <Link
-              to="/people"
-              className={location.pathname === "/people" ? "active" : ""}
-            >
+            <NavLink to="/people" className={({ isActive }) => (isActive ? "active" : "")}>
               People
-            </Link>
+            </NavLink>
           </li>
+
           <li>
-            <Link
-              to="/person"
-              className={location.pathname === "/person" ? "active" : ""}
-            >
+            <NavLink to="/person" className={({ isActive }) => (isActive ? "active" : "")}>
               Person
-            </Link>
+            </NavLink>
           </li>
+
+          {/* Родительский пункт */}
           <li>
-            <Link
-              to="/forms"
-              className={location.pathname === "/forms" ? "active" : ""}
+            <NavLink
+              to="/forms/trans_indicat"
+              className={() => (isForms ? "active" : "")}
             >
               Forms
-            </Link>
+            </NavLink>
+
+            {/* Подпункты */}
+            <ul className="submenu">
+              <li>
+                <NavLink
+                  to="/forms/trans_indicat"
+                  className={({ isActive }) => (isActive ? "active" : "")}
+                >
+                  Trans_Indicat
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/forms/units_reasons"
+                  className={({ isActive }) => (isActive ? "active" : "")}
+                >
+                  Units_Reasons
+                </NavLink>
+              </li>
+            </ul>
           </li>
         </ul>
       </nav>

@@ -27,6 +27,7 @@
 
 .forms-wrapper{
   display: flex;
+  gap: 2rem;
   margin: 0 auto;
   justify-content: space-around;
   flex-wrap: wrap;
@@ -118,3 +119,6 @@
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
+.submenu { margin: 6px 0 0 14px; }
+.submenu li { margin: 4px 0; }

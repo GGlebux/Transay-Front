@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import axios from "axios";
-import { FloatingTextInput, FloatingSelect } from "./FloatingTextField";
-import { API } from "../apiConfig"; // импорт API
+import { FloatingTextInput, FloatingSelect } from "../Trans_Indicat/FloatingTextField";
+import { API } from "../../apiConfig"; // импорт API
 
 const genders = ["male", "female", "both"];
 

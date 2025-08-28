@@ -1,4 +1,4 @@
-import FormsWrapper from "../components/FormsWrapper";
+import FormsWrapper from "../../components/Trans_Indicat/FormsWrapper";
 
 
 export default function FormsPage() {

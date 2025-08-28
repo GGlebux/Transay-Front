@@ -1,5 +1,5 @@
 import React from 'react';
-import '../styles/forms.css';
+import '../../styles/forms.css';
 
 
 type FloatingProps = {
