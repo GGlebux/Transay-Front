@@ -6,50 +6,39 @@ import { FloatingTextInput } from "../../components/Trans_Indicat/FloatingTextFi
 
 type Named = { id: number; name: string };
 
-/** Попытка достать обычное имя из строки, куда могли положить JSON вида {"name":"..."} */
+/** Достаём нормальное имя из строки, куда могли положить JSON {"name":"..."} */
 function extractName(raw: unknown): string {
   if (typeof raw === "string") {
-    // Уже нормальная строка
     if (!(raw.startsWith("{") && raw.endsWith("}"))) return raw;
-    // Попробуем распарсить JSON-строку
     try {
       const parsed = JSON.parse(raw);
       if (parsed && typeof parsed.name === "string") return parsed.name;
-    } catch { /* ignore */ }
+    } catch {}
     return raw;
   }
   if (raw == null) return "";
   return String(raw);
 }
 
-/** Унификация ответа API: поддержим string[] и [{id,name}] и "кривые" строки */
+/** Поддержим string[] и [{id,name}] и "кривые" строки */
 function normalize(payload: unknown): Named[] {
-  if (!Array.isArray(payload)) return [];
-  if (payload.length === 0) return [];
-
-  // Вариант string[]
+  if (!Array.isArray(payload) || payload.length === 0) return [];
   if (typeof payload[0] === "string") {
     return (payload as string[]).map((n, i) => ({ id: i + 1, name: extractName(n) }));
   }
-
-  // Вариант [{id,name}]
   return (payload as any[]).map((it, i) => ({
     id: Number(it?.id ?? i + 1),
     name: extractName(it?.name),
   }));
 }
 
-/** Надёжная отправка: сперва {name}, при ошибке — "raw string" */
-async function postNameWithFallback(endpoint: string, value: string) {
-  // 1) Пробуем корректный контракт
-  try {
-    return await axios.post(endpoint, { name: value.trim() });
-  } catch (e) {
-    // 2) Если бэк сериализует весь body -> попробуем передать сырую строку
-    return await axios.post(endpoint, JSON.stringify(value.trim()), {
-      headers: { "Content-Type": "application/json" },
-    });
-  }
+/** Всегда отправляем PLAIN TEXT, чтобы в БД не попадало {"name":"..."} */
+function postPlain(endpoint: string, value: string) {
+  return axios.post(endpoint, value.trim(), {
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+    // на всякий: запрещаем axios превращать строку в JSON
+    transformRequest: [(data) => data],
+  });
 }
 
 export default function Units_Reasons() {
@@ -79,22 +68,17 @@ function UnitsBlock() {
     if (!value.trim()) return;
     setLoading(true);
     try {
-      await postNameWithFallback(API.INDICATOR_UNITS, value);
+      await postPlain(API.INDICATOR_UNITS, value);
       setValue("");
       await load();
       alert("Unit создан");
     } catch (err: any) {
       alert(err?.response?.data?.message || err.message || "Ошибка");
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const remove = async (id: number, name: string) => {
-    if (!Number.isFinite(id)) {
-      alert("Невозможно удалить: сервер не вернул id.");
-      return;
-    }
+    if (!Number.isFinite(id)) return alert("Невозможно удалить: сервер не вернул id.");
     if (!window.confirm(`Удалить unit «${name}»?`)) return;
 
     setDeletingId(id);
@@ -103,9 +87,7 @@ function UnitsBlock() {
       setItems((prev) => prev.filter((u) => u.id !== id));
     } catch (err: any) {
       alert(err?.response?.data?.message || err.message || "Ошибка удаления");
-    } finally {
-      setDeletingId(null);
-    }
+    } finally { setDeletingId(null); }
   };
 
   return (
@@ -119,9 +101,7 @@ function UnitsBlock() {
             value={value}
             onChange={(e) => setValue(e.target.value)}
           />
-          <button type="submit" disabled={loading}>
-            {loading ? "..." : "Создать"}
-          </button>
+          <button type="submit" disabled={loading}>{loading ? "..." : "Создать"}</button>
         </div>
       </div>
 
@@ -163,22 +143,17 @@ function ReasonsBlock() {
     if (!value.trim()) return;
     setLoading(true);
     try {
-      await postNameWithFallback(API.REASONS, value);
+      await postPlain(API.REASONS, value);
       setValue("");
       await load();
       alert("Reason создан");
     } catch (err: any) {
       alert(err?.response?.data?.message || err.message || "Ошибка");
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const remove = async (id: number, name: string) => {
-    if (!Number.isFinite(id)) {
-      alert("Невозможно удалить: сервер не вернул id.");
-      return;
-    }
+    if (!Number.isFinite(id)) return alert("Невозможно удалить: сервер не вернул id.");
     if (!window.confirm(`Удалить причину «${name}»?`)) return;
 
     setDeletingId(id);
@@ -187,9 +162,7 @@ function ReasonsBlock() {
       setItems((prev) => prev.filter((r) => r.id !== id));
     } catch (err: any) {
       alert(err?.response?.data?.message || err.message || "Ошибка удаления");
-    } finally {
-      setDeletingId(null);
-    }
+    } finally { setDeletingId(null); }
   };
 
   return (
@@ -203,9 +176,7 @@ function ReasonsBlock() {
             value={value}
             onChange={(e) => setValue(e.target.value)}
           />
-          <button type="submit" disabled={loading}>
-            {loading ? "..." : "Создать"}
-          </button>
+          <button type="submit" disabled={loading}>{loading ? "..." : "Создать"}</button>
         </div>
       </div>
 
