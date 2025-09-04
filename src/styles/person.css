@@ -1,0 +1,246 @@
+/* === COMPACT OVERRIDES === */
+
+/* карточки и шапка */
+
+.button {
+  width: 100px;
+  height: 100px;
+}
+.form-card div button{ 
+  height: 38px;
+  width: 20px;
+}
+
+.form-card{
+  padding: 15px;
+
+}
+
+.person-page{ padding:.75rem; }
+.person-header{ margin-bottom:.75rem; }
+.person-header h1{ font-size:1.1rem; margin:.25rem 0; }
+.back-link{ color:#007bff; text-decoration:none; font-size:.9rem; }
+
+/* строка ввода сверху */
+.person-input-row{
+  display:grid;
+  grid-template-columns: 1.2fr .6fr .6fr auto;
+  gap:8px;
+  margin-bottom:.75rem;
+  padding:.5rem; /* <-- было "1  rem" */
+}
+
+.person-input-row button{
+  padding:.5rem .9rem;
+  font-size:.85rem;
+  border-radius:.5rem;
+}
+
+/* поля ввода (Floating*) */
+.text-field{ margin:.25rem 0; }
+.text-field__input{
+  padding:.5rem .6rem .4rem;
+  height:34px;
+  font-size:.85rem;
+}
+.text-field__label{ font-size:.85rem; }
+.text-field__input:focus + .text-field__label,
+.text-field__input:not(:placeholder-shown) + .text-field__label{
+  transform: translateY(-1.6rem);
+  font-size:.7rem;
+}
+
+select{
+  padding:.5rem .6rem;
+  font-size:.85rem;
+  min-height:34px;
+}
+
+/* таблица (одна, компактная) */
+.table-wrapper{ overflow:auto; border-radius:.6rem; margin-top:.5rem; }
+.person-grid{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  background:#fff;
+  border-radius:.6rem;
+  box-shadow:0 1px 6px rgba(0,51,102,.06);
+}
+.person-grid thead th{
+  position:sticky; top:0; z-index:3;
+  background:#78aef7;
+  color:#fff;
+  padding:.4rem .5rem;
+  font-weight:600;
+  font-size:.8rem;
+  text-align:center;
+  border-right:1px solid rgba(255,255,255,.25);
+  white-space:nowrap;
+}
+.person-grid td{
+  padding:.4rem .5rem;
+  font-size:.85rem;
+  border-bottom:1px solid #e8eef9;
+  border-right:1px solid #eef3fb;
+  text-align:center;
+}
+.person-grid .sticky-col{
+  position:sticky; left:0;
+  background:#f7fbff;
+  text-align:left;
+  min-width:140px; /* было 180 */
+  z-index:2;
+}
+.person-grid thead .sticky-col{ background:#78aef7; color:#fff; z-index:4; }
+
+/* подсветка статусов (чуть мягче) */
+.cell-raise{ background:#fff1f1; color:#b42318; font-weight:600; }
+.cell-fall{  background:#f1f6ff; color:#1849b5; font-weight:600; }
+
+/* компактный скролл */
+.table-wrapper::-webkit-scrollbar{ height:8px; width:8px; }
+.table-wrapper::-webkit-scrollbar-thumb{ background:#cfd8ea; border-radius:8px; }
+
+/* адаптив */
+@media (max-width: 900px){
+  .person-input-row{ grid-template-columns: 1fr 1fr; gap:8px; }
+  .person-input-row button{ grid-column:1 / -1; }
+  .person-grid .sticky-col{ min-width:120px; }
+}
+
+/* Стили для контейнера пагинации */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+/* Стили для отдельных кнопок пагинации */
+.pagination-button {
+  padding: 8px 16px;
+  font-size: 14px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+/* Кнопка "disabled" */
+.pagination-button:disabled {
+  background-color: #b0d0ff;
+  cursor: not-allowed;
+}
+
+/* Кнопка при наведении */
+.pagination-button:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+/* Стили для текущей страницы */
+.pagination-button.current-page {
+  background-color: #4f9dff;
+  font-weight: bold;
+}
+
+/* Стиль для текста в пагинации */
+.pagination-text {
+  font-size: 14px;
+  color: #555;
+}
+
+/* Мобильные стили */
+@media (max-width: 768px) {
+  .pagination-container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Зеленая ячейка для "ok" */
+.cell-ok {
+  background-color: #37c9597c;  /* Зеленый */
+  color: white;
+}
+
+/* Красная ячейка для "raise" и "fall" */
+.cell-raise {
+  background-color: #e85a506f;  /* Красный */
+  color: white;
+}
+
+/* Стили для модалки */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+}
+
+button {
+  padding: 10px 20px;
+  margin: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button[type="button"] {
+  background-color: #f44336; /* Красный для кнопки "Отмена" */
+}
+
+button:hover {
+  opacity: 0.8;
+}
+
+/* Пример стилей для модального окна */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.modal-overlay h3 {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.modal-overlay .text-field{
+   margin: 1rem 0;
+   }
+
+.modal-content {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  
+}
+
+
+

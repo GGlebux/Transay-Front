@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { API } from "../apiConfig";
@@ -233,7 +234,7 @@ export default function People() {
           <tbody>
             {filteredPeople.map((p) => (
               <tr key={p.id}>
-                <td>{p.name}</td>
+                <td><Link to={`/person/${p.id}`}>{p.name}</Link></td>
                 <td>{p.dateOfBirth}</td>
                 <td>{calcAge(p.dateOfBirth)}</td>
                 <td>{p.gender}</td>
