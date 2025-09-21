@@ -1,13 +1,12 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import type { FormEvent } from "react";
-
 import { useParams, Link } from "react-router-dom";
 import axios from "axios";
 import { API } from "../apiConfig";
 import { FloatingTextInput, FloatingSelect } from "../components/Trans_Indicat/FloatingTextField";
 import "../styles/person.css";
 
-/* ---------- Типы под ответ /people/:id/measures ---------- */
+/* ---------- Типы ---------- */
 type Reason = { id: number; name: string };
 type Measure = {
   id: number;
@@ -22,7 +21,6 @@ type Measure = {
 type Meta = { indicatorName: string; measures: Measure[] };
 type GroupBlock = { groupName: string; dates: string[]; metas: Meta[] };
 
-/* ---------- Типы под /groups (справочник для формы) ---------- */
 type GroupResp = {
   id: number;
   groupName: string;
@@ -30,10 +28,11 @@ type GroupResp = {
 };
 
 type IndicatorOption = {
-  key: string;           // уникальный ключ "groupName||name"
-  label: string;         // "<Группа> · <Индикатор>"
-  name: string;          // само имя индикатора (для POST: "name")
-  units: string[];       // список единиц (для селекта)
+  key: string;       // "groupName||name"
+  label: string;     // показываем ТОЛЬКО название индикатора (без имени группы)
+  name: string;      // имя индикатора (для POST/PATCH)
+  units: string[];   // единицы
+  groupName: string; // для фильтрации по группе
 };
 
 type PersonInfo = { id: number; name: string };
@@ -54,14 +53,20 @@ export default function Person() {
   const [blocks, setBlocks] = useState<GroupBlock[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Пагинация по группам (одна таблица)
+  // все группы из справочника
+  const [allGroups, setAllGroups] = useState<GroupResp[]>([]);
+  // "виртуально" добавленные пользователем группы (без данных из /measures)
+  const [extraGroups, setExtraGroups] = useState<string[]>([]);
+  const [showAddGroup, setShowAddGroup] = useState(false);
+
+  // Пагинация по группам
   const [groupIndex, setGroupIndex] = useState(0);
 
   // Пагинация по столбцам
   const [currentPage, setCurrentPage] = useState(0);
   const [columnsPerPage] = useState(8);
 
-  // Верхняя форма (добавление нового измерения)
+  // Форма добавления измерения
   const [indicatorOptions, setIndicatorOptions] = useState<IndicatorOption[]>([]);
   const [indicatorKey, setIndicatorKey] = useState<string>("");
   const [unit, setUnit] = useState<string>("");
@@ -69,20 +74,10 @@ export default function Person() {
   const [date, setDate] = useState(todayISO());
   const [saving, setSaving] = useState(false);
 
-  // ---- Drag & Drop для редактирования/удаления ----
-  const [showDropZones, setShowDropZones] = useState(false);
-  const [dropTarget, setDropTarget] = useState<null | "edit" | "delete">(null);
-  const [dragging, setDragging] = useState<null | {
-    measureId: number;
-    name: string;
-    units: string;
-    currentValue: string | number;
-    regDate: string;
-  }>(null);
-
   // ------ Инфо-панель (оверлей сверху) ------
   const [infoOpen, setInfoOpen] = useState(false);
   const [infoData, setInfoData] = useState<{
+    id?: number;
     indicatorName: string;
     value: string | number;
     units?: string;
@@ -93,11 +88,12 @@ export default function Person() {
   } | null>(null);
 
   const openInfo = (
-    cell: { v: string | number; units?: string; min: number | null; max: number | null; reasons: Reason[] },
+    cell: { id?: number; v: string | number; units?: string; min: number | null; max: number | null; reasons: Reason[] },
     indicatorName: string,
     dateISO: string
   ) => {
     setInfoData({
+      id: cell.id,
       indicatorName,
       value: cell.v,
       units: cell.units,
@@ -108,20 +104,13 @@ export default function Person() {
     });
     setInfoOpen(true);
   };
-
-  const closeInfo = () => {
-    setInfoOpen(false);
-    setInfoData(null);
-  };
-
-  // закрытие по Esc
+  const closeInfo = () => { setInfoOpen(false); setInfoData(null); };
   useEffect(() => {
     if (!infoOpen) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && closeInfo();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [infoOpen]);
-
 
   // Модалка редактирования
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -131,7 +120,7 @@ export default function Person() {
   const [editUnits, setEditUnits] = useState<string>("");
   const [editName, setEditName] = useState<string>("");
 
-  // Загрузка ФИО, таблицы и СПРАВОЧНИКА ИНДИКАТОРОВ (из /groups)
+  // Загрузка данных
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -143,66 +132,108 @@ export default function Person() {
         ]);
         if (!alive) return;
 
-        // ---- ФИО ----
+        // ФИО
         const pU = unwrap(p.data);
-        if (pU && typeof pU === "object") {
-          setPerson({
-            id: Number(pU.id ?? personId),
-            name: String(pU.name ?? `Person #${personId}`),
-          });
-        } else {
-          setPerson({ id: Number(personId), name: `Person #${personId}` });
-        }
+        setPerson(
+          pU && typeof pU === "object"
+            ? { id: Number(pU.id ?? personId), name: String(pU.name ?? `Person #${personId}`) }
+            : { id: Number(personId), name: `Person #${personId}` }
+        );
 
-        // ---- Blocks из /people/:id/measures ----
+        // Blocks из /people/:id/measures
         const raw = unwrap(measures.data);
-        const arr: GroupBlock[] = Array.isArray(raw) ? raw : [];
-        setBlocks(arr);
+        setBlocks(Array.isArray(raw) ? raw : []);
 
-        // ---- Индикаторы из /groups ----
+        // Справочник групп и индикаторов
         const gRaw = unwrap(groupsRes.data) as GroupResp[];
-        const opts: IndicatorOption[] = Array.isArray(gRaw)
-          ? gRaw.flatMap((g: GroupResp) =>
-            (g?.indicators ?? []).map((it) => ({
-              key: `${g.groupName}||${it.name}`,
-              label: `${g.groupName} · ${it.name}`,
-              name: it.name,
-              units: Array.isArray(it.units) ? it.units.filter(Boolean) : [],
-            }))
-          )
-          : [];
+        const groupsArr: GroupResp[] = Array.isArray(gRaw) ? gRaw : [];
+        setAllGroups(groupsArr);
+
+        // Генерация опций: label — только имя индикатора (без группы)
+        const opts: IndicatorOption[] = groupsArr.flatMap((g) =>
+          (g?.indicators ?? []).map((it) => ({
+            key: `${g.groupName}||${it.name}`,
+            label: it.name, // <= убираем повтор названия группы
+            name: it.name,
+            units: Array.isArray(it.units) ? it.units.filter(Boolean) : [],
+            groupName: g.groupName,
+          }))
+        );
+        // Сортируем по имени индикатора (локаль RU подходит для кириллицы/латиницы)
         opts.sort((a, b) => a.label.localeCompare(b.label, "ru"));
         setIndicatorOptions(opts);
-
-        // Автоподбор первого индикатора и его первой единицы
-        if (!indicatorKey && opts.length) {
-          setIndicatorKey(opts[0].key);
-          setUnit(opts[0].units[0] ?? "");
-        }
       } catch (e) {
         console.error(e);
       } finally {
         if (alive) setLoading(false);
       }
     })();
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, [personId]);
 
-  // Следим, чтобы индекс группы был валиден при обновлении blocks
+  // Группы, которых нет в видимых (blocks + extra)
+  const existingGroupNames = useMemo(() => {
+    const s = new Set<string>();
+    for (const b of blocks) s.add(b.groupName);
+    for (const g of extraGroups) s.add(g);
+    return s;
+  }, [blocks, extraGroups]);
+
+  const missingGroups = useMemo(
+    () => allGroups.filter(g => !existingGroupNames.has(g.groupName)),
+    [allGroups, existingGroupNames]
+  );
+
+  // Массив отображаемых групп: blocks + виртуальные пустые
+  const displayGroups: GroupBlock[] = useMemo(() => {
+    const arr: GroupBlock[] = [...blocks];
+    for (const gname of extraGroups) {
+      if (!arr.find(a => a.groupName === gname)) {
+        arr.push({ groupName: gname, dates: [], metas: [] });
+      }
+    }
+    return arr;
+  }, [blocks, extraGroups]);
+
+  // Следим, чтобы индекс группы был валиден
   useEffect(() => {
-    setGroupIndex((i) => Math.min(Math.max(0, i), blocks.length - 1));
-  }, [blocks.length]);
+    setGroupIndex(i => Math.min(Math.max(0, i), displayGroups.length - 1));
+  }, [displayGroups.length]);
 
   // Текущая группа и её даты
-  const current = blocks[groupIndex] || { groupName: "", dates: [], metas: [] };
+  const current = displayGroups[groupIndex] || { groupName: "", dates: [], metas: [] };
   const groupDates = useMemo(() => [...(current.dates ?? [])].sort(), [current.dates]);
+  const currentGroupName = current.groupName || "";
+
+  // опции индикаторов только текущей группы
+  const optionsForCurrentGroup = useMemo(
+    () => indicatorOptions.filter(o => o.groupName === currentGroupName),
+    [indicatorOptions, currentGroupName]
+  );
+
+  // если сменили группу — подберём первый индикатор в форме
+  useEffect(() => {
+    if (optionsForCurrentGroup.length === 0) return;
+    if (!indicatorKey || !optionsForCurrentGroup.some(o => o.key === indicatorKey)) {
+      const first = optionsForCurrentGroup[0];
+      setIndicatorKey(first.key);
+      setUnit(first.units[0] ?? "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentGroupName, optionsForCurrentGroup]);
 
   // Карта значений только для текущей группы (ключ: indicatorName|date)
-  // Храним id, значение, статус, units и name (для PATCH/DELETE)
   const valueMap = useMemo(() => {
-    const m = new Map<string, { id?: number; v: string | number; status: Measure["status"]; units?: string; name: string; min: number | null; max: number | null; reasons: Reason[]; }>();
+    const m = new Map<string, {
+      id?: number;
+      v: string | number;
+      status: Measure["status"];
+      units?: string;
+      name: string;
+      min: number | null;
+      max: number | null;
+      reasons: Reason[];
+    }>();
     for (const meta of current.metas ?? []) {
       for (const meas of meta.measures ?? []) {
         m.set(`${meta.indicatorName}||${meas.regDate}`, {
@@ -220,11 +251,13 @@ export default function Person() {
     return m;
   }, [current]);
 
-  // При смене индикатора в форме — обновить доступные units
+  // выбранный индикатор (по ключу)
   const selectedIndicator = useMemo(
     () => indicatorOptions.find((o) => o.key === indicatorKey),
     [indicatorOptions, indicatorKey]
   );
+
+  // синхронизируем unit с выбранным индикатором
   useEffect(() => {
     if (selectedIndicator) {
       if (!selectedIndicator.units.includes(unit)) {
@@ -233,9 +266,9 @@ export default function Person() {
     } else {
       setUnit("");
     }
-  }, [selectedIndicator]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedIndicator]);
 
-  // Сохранить новое измерение (верхняя форма)
+  // Сохранить новое измерение
   const onSave = async (e: FormEvent) => {
     e.preventDefault();
     if (!selectedIndicator) return alert("Выберите индикатор");
@@ -248,12 +281,10 @@ export default function Person() {
         name: selectedIndicator.name,
         units: unit,
         currentValue: Number(value),
-        regDate: date, // YYYY-MM-DD
+        regDate: date,
       };
-
       await axios.post(API.PERSON_MEASURES(personId), payload);
 
-      // Перезагружаем блоки
       const ms = await axios.get(API.PERSON_MEASURES(personId));
       const arr: GroupBlock[] = Array.isArray(unwrap(ms.data)) ? unwrap(ms.data) : [];
       setBlocks(arr);
@@ -274,91 +305,54 @@ export default function Person() {
   const goToPreviousPage = () => currentPage > 0 && setCurrentPage(currentPage - 1);
   const goToNextPage = () => currentPage < totalPages - 1 && setCurrentPage(currentPage + 1);
 
-  // ---------- Drag & Drop handlers ----------
-  const handleCellDragStart = (cell: { id?: number; name: string; units?: string; v: string | number }, regDate: string) => {
-    if (!cell?.id) return; // пустая ячейка — не тащим
-    setDragging({
-      measureId: cell.id,
-      name: cell.name,
-      units: cell.units || "",
-      currentValue: cell.v,
-      regDate,
-    });
-    setShowDropZones(true);
+  // --- Хуки для ленты групп (ДОЛЖНЫ БЫТЬ ДО ЛЮБОГО return) ---
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateTabsScrollState = () => {
+    const el = tabsRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 0);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
   };
-
-  const handleCellDragEnd = () => {
-    setShowDropZones(false);
-    setDropTarget(null);
-    setDragging(null);
+  const scrollTabsBy = (px: number) => {
+    const el = tabsRef.current;
+    if (!el) return;
+    el.scrollBy({ left: px, behavior: "smooth" });
   };
-
-  const handleZoneDragOver = (e: React.DragEvent, target: "edit" | "delete") => {
-    e.preventDefault();
-    setDropTarget(target);
-  };
-
-  const handleZoneDrop = async (target: "edit" | "delete") => {
-    if (!dragging) return;
-    setShowDropZones(false);
-
-    if (target === "delete") {
-      if (!window.confirm("Удалить это измерение?")) {
-        setDragging(null);
-        setDropTarget(null);
-        return;
-      }
-      try {
-        await axios.delete(`${API.PERSON_MEASURES(personId)}/${dragging.measureId}`);
-        // обновить таблицу
-        const ms = await axios.get(API.PERSON_MEASURES(personId));
-        const arr: GroupBlock[] = Array.isArray(unwrap(ms.data)) ? unwrap(ms.data) : [];
-        setBlocks(arr);
-      } catch (err) {
-        console.error(err);
-        alert("Ошибка при удалении измерения");
-      } finally {
-        setDragging(null);
-        setDropTarget(null);
-      }
-      return;
-    }
-
-    // target === 'edit' — откроем модалку с предзаполнением
-    setEditingMeasureId(dragging.measureId);
-    setEditValue(String(dragging.currentValue ?? ""));
-    setEditDate(dragging.regDate);
-    setEditUnits(dragging.units || "");
-    setEditName(dragging.name);
-    setEditModalOpen(true);
-
-    setDragging(null);
-    setDropTarget(null);
-  };
+  useEffect(() => {
+    const el = tabsRef.current;
+    if (!el) return;
+    updateTabsScrollState();
+    const onScroll = () => updateTabsScrollState();
+    const ro = new ResizeObserver(updateTabsScrollState);
+    el.addEventListener("scroll", onScroll);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      ro.disconnect();
+    };
+  }, []);
+  // --- конец блока ленты групп ---
 
   const handleEditSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (editingMeasureId == null) return;
-
     if (!editName || !editUnits) {
       alert("Укажите имя индикатора и единицы измерения");
       return;
     }
-
     try {
       const payload = {
-        name: editName,           // <--- имя из модалки
-        units: editUnits,         // <--- единицы из модалки
+        name: editName,
+        units: editUnits,
         currentValue: Number(editValue),
         regDate: editDate,
       };
-
       await axios.patch(`${API.PERSON_MEASURES(personId)}/${editingMeasureId}`, payload);
-
       setEditModalOpen(false);
       setEditingMeasureId(null);
-
-      // перезагрузка таблицы
       const ms = await axios.get(API.PERSON_MEASURES(personId));
       const arr: GroupBlock[] = Array.isArray(unwrap(ms.data)) ? unwrap(ms.data) : [];
       setBlocks(arr);
@@ -368,68 +362,7 @@ export default function Person() {
     }
   };
 
-
   if (loading) return <p>Загрузка...</p>;
-
-  // простые стили для зон сброса (можете перенести в person.css)
-  // инфо-оверлей
-  const infoOverlayStyle: React.CSSProperties = {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(0,0,0,0.35)",
-    zIndex: 9998,
-  };
-
-  const infoCardStyle: React.CSSProperties = {
-    position: "fixed",
-    top: 40,
-    left: "50%",
-    transform: "translateX(-50%)",
-    zIndex: 9999,
-    width: 560,
-    maxWidth: "90vw",
-    background: "white",
-    borderRadius: 14,
-    boxShadow: "0 16px 40px rgba(0,0,0,0.2)",
-    padding: 16,
-  };
-
-  const infoTitleStyle: React.CSSProperties = {
-    margin: 0,
-    marginBottom: 10,
-    fontSize: 18,
-    fontWeight: 700,
-  };
-
-  const infoRowStyle: React.CSSProperties = { margin: "6px 0" };
-  const infoReasonsListStyle: React.CSSProperties = { margin: "6px 0 0 18px" };
-  const infoCloseBtnStyle: React.CSSProperties = {
-    position: "absolute",
-    top: 8,
-    right: 10,
-    border: "none",
-    background: "transparent",
-    fontSize: 20,
-    cursor: "pointer",
-  };
-
-  const zoneBase: React.CSSProperties = {
-    position: "fixed",
-    top: "60%",
-    transform: "translateY(-50%)",
-    zIndex: 9999,
-    padding: "14px 16px",
-    border: "2px dashed #c8c8c8",
-    borderRadius: 12,
-    background: "rgba(255,255,255,0.96)",
-    boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
-    fontWeight: 600,
-    userSelect: "none",
-    opacity: 0.95,
-  };
-  const zoneLeft: React.CSSProperties = { ...zoneBase, left: 250 };
-  const zoneRight: React.CSSProperties = { ...zoneBase, right: 5 };
-  const zoneActive: React.CSSProperties = { borderColor: "#007bff", boxShadow: "0 0 0 4px rgba(0,123,255,0.15)" };
 
   return (
     <div className="person-page">
@@ -438,21 +371,56 @@ export default function Person() {
         <h1>{person?.name ?? `Person #${personId}`}</h1>
       </div>
 
-      {/* Верхняя строка ввода (добавление) */}
+      {/* Лента групп с обрезанием и стрелками */}
+      <div className="tabs-bar-wrap">
+        {canScrollLeft && (
+          <button type="button" className="chevron chevron-left" aria-label="Листать влево" onClick={() => scrollTabsBy(-240)}>➤</button>
+        )}
+        <div className="tabs-viewport">
+          <div className="tabs-row" ref={tabsRef}>
+            {displayGroups.map((g, i) => (
+              <button
+                key={g.groupName || i}
+                type="button"
+                className={`tab-btn ${i === groupIndex ? "active" : ""}`}
+                onClick={() => setGroupIndex(i)}
+                title={g.groupName}
+              >
+                {g.groupName || `Группа ${i + 1}`}
+              </button>
+            ))}
+            {missingGroups.length > 0 && (
+              <button
+                type="button"
+                className="plus-btn"
+                onClick={() => setShowAddGroup(true)}
+                title="Добавить группу"
+              >
+                +
+              </button>
+            )}
+          </div>
+        </div>
+        {canScrollRight && (
+          <button type="button" className="chevron chevron-right" aria-label="Листать вправо" onClick={() => scrollTabsBy(240)}>➤</button>
+        )}
+      </div>
+
+      {/* Верхняя строка ввода (добавление) – список индикаторов только текущей группы */}
       <form className="form-card person-input-row" onSubmit={onSave}>
         <FloatingSelect
           id="indicator"
           label="Выберите индикатор"
           value={indicatorKey}
           onChange={(e) => setIndicatorKey(e.target.value)}
-          options={indicatorOptions.map((o) => ({ value: o.key, label: o.label }))}
+          options={optionsForCurrentGroup.map((o) => ({ value: o.key, label: o.label }))} /* ← без имени группы */
         />
         <FloatingSelect
           id="units"
           label="Единицы"
           value={unit}
           onChange={(e) => setUnit(e.target.value)}
-          options={(selectedIndicator?.units ?? []).map((u) => ({ value: u, label: u }))}
+          options={(indicatorOptions.find(o => o.key === indicatorKey)?.units ?? []).map((u) => ({ value: u, label: u }))}
         />
         <FloatingTextInput
           id="value"
@@ -473,26 +441,6 @@ export default function Person() {
         </button>
       </form>
 
-      {/* Панель навигации по группам */}
-      <div className="form-card" style={{ marginBottom: 12 }}>
-        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "nowrap" }}>
-          <select
-            value={groupIndex}
-            onChange={(e) => setGroupIndex(Number(e.target.value))}
-            style={{ padding: "0.5rem", borderRadius: 8 }}
-          >
-            {blocks.map((g, i) => (
-              <option key={g.groupName || i} value={i}>
-                {g.groupName || `Группа ${i + 1}`}
-              </option>
-            ))}
-          </select>
-          <span style={{ marginLeft: "auto", opacity: 0.7 }}>
-            Страница {blocks.length ? groupIndex + 1 : 0} / {blocks.length}
-          </span>
-        </div>
-      </div>
-
       {/* Таблица текущей группы */}
       <div className="table-wrapper">
         <table className="person-grid">
@@ -500,9 +448,7 @@ export default function Person() {
             <tr>
               <th className="sticky-col">{current.groupName || "Индикатор"}</th>
               {columnsForPage.map((d) => (
-                <th key={d}>
-                  {d}
-                </th>
+                <th key={d}>{d}</th>
               ))}
             </tr>
           </thead>
@@ -514,53 +460,38 @@ export default function Person() {
                   const cell = valueMap.get(`${meta.indicatorName}||${d}`);
                   const cls =
                     cell?.status === "ok"
-                      ? "cell-ok" // зелёный
+                      ? "cell-ok"
                       : cell?.status === "raise" || cell?.status === "fall"
-                        ? "cell-raise" // красный
+                        ? "cell-raise"
                         : "";
-
-                  // только непустые ячейки делаем draggable
-                  const isDraggable = Boolean(cell?.id);
 
                   return (
                     <td
                       key={d}
                       className={cls}
-                      draggable={isDraggable}
-                      onDragStart={() => cell && handleCellDragStart(cell, d)}
-                      onDragEnd={handleCellDragEnd}
-                      onClick={() => cell && openInfo(
-                        // @ts-ignore — мы ниже уже записываем min/max/units/reasons в valueMap
-                        { v: cell.v, units: cell.units, min: cell.min, max: cell.max, reasons: cell.reasons },
-                        meta.indicatorName,
-                        d
-                      )}
-                      title={
-                        isDraggable
-                          ? `1) Перетащите в лева для редактирования ✎
-2) В права для удаления 🗑
-3) По клику покажет подробную информацию ! `
-                          : "Клик — подробная информация"
+                      onClick={() =>
+                        cell &&
+                        openInfo(
+                          { id: cell.id, v: cell.v, units: cell.units, min: cell.min, max: cell.max, reasons: cell.reasons },
+                          meta.indicatorName,
+                          d
+                        )
                       }
-                      style={isDraggable ? { cursor: "grab" } : undefined}
+                      title="Клик — подробная информация"
                     >
-                      <span style={{ pointerEvents: "none" }}>
+                      <span>
                         {cell?.v ?? ""}
                         {cell?.status === "raise" && " ↑"}
                         {cell?.status === "fall" && " ↓"}
                       </span>
                     </td>
-
                   );
                 })}
               </tr>
             ))}
             {current.metas.length === 0 && (
               <tr>
-                <td
-                  colSpan={1 + columnsForPage.length}
-                  style={{ textAlign: "center", color: "#777" }}
-                >
+                <td colSpan={1 + columnsForPage.length} className="no-data">
                   Нет показателей в группе
                 </td>
               </tr>
@@ -571,94 +502,124 @@ export default function Person() {
 
       {/* Пагинация */}
       <div className="pagination-container">
-        <button
-          className="pagination-button"
-          onClick={goToPreviousPage}
-          disabled={currentPage === 0}
-        >
+        <button className="pagination-button" onClick={goToPreviousPage} disabled={currentPage === 0}>
           Назад
         </button>
-
-        <span className="pagination-text">
-          Страница {currentPage + 1} из {totalPages}
-        </span>
-
-        <button
-          className="pagination-button"
-          onClick={goToNextPage}
-          disabled={currentPage === totalPages - 1}
-        >
+        <span className="pagination-text">Страница {currentPage + 1} из {totalPages}</span>
+        <button className="pagination-button" onClick={goToNextPage} disabled={currentPage === totalPages - 1}>
           Вперед
         </button>
       </div>
 
-      {/* Инфо-панель (оверлей сверху) */}
+      {/* Инфо-панель (с редактированием и удалением) */}
       {infoOpen && infoData && (
         <>
-          <div style={infoOverlayStyle} onClick={closeInfo} />
-          <div style={infoCardStyle} role="dialog" aria-modal="true">
-            <button aria-label="Закрыть" style={infoCloseBtnStyle} onClick={closeInfo}>×</button>
-            <h3 style={infoTitleStyle}>Информация</h3>
-
-            <div style={infoRowStyle}><b>Индикатор:</b> {infoData.indicatorName}</div>
-            <div style={infoRowStyle}><b>Дата:</b> {infoData.date}</div>
-            <div style={infoRowStyle}>
-              <b>Значение:</b> {infoData.value} {infoData.units}
-            </div>
-            {infoData.min != null && (
-              <div style={infoRowStyle}><b>Мин значение:</b> {infoData.min} {infoData.units}</div>
-            )}
-            {infoData.max != null && (
-              <div style={infoRowStyle}><b>Макс значение:</b> {infoData.max} {infoData.units}</div>
-            )}
-
+          <div className="info-overlay" onClick={closeInfo} />
+          <div className="info-card" role="dialog" aria-modal="true">
+            <button aria-label="Закрыть" className="info-close" onClick={closeInfo}>×</button>
+            <h3 className="info-title">Информация</h3>
+            <div className="info-row"><b>Индикатор:</b> {infoData.indicatorName}</div>
+            <div className="info-row"><b>Дата:</b> {infoData.date}</div>
+            <div className="info-row"><b>Значение:</b> {infoData.value} {infoData.units}</div>
+            {infoData.min != null && <div className="info-row"><b>Мин значение:</b> {infoData.min} {infoData.units}</div>}
+            {infoData.max != null && <div className="info-row"><b>Макс значение:</b> {infoData.max} {infoData.units}</div>}
             {infoData.reasons?.length ? (
-              <div style={{ marginTop: 8 }}>
+              <div className="info-reasons">
                 <b>Причины:</b>
-                <ul style={infoReasonsListStyle}>
-                  {infoData.reasons.map((r) => (
-                    <li key={r.id}>{r.name}</li>
-                  ))}
+                <ul>
+                  {infoData.reasons.map((r) => <li key={r.id}>{r.name}</li>)}
                 </ul>
               </div>
             ) : null}
+
+            {infoData.id && (
+              <div className="modal-actions" style={{ marginTop: 12 }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingMeasureId(infoData.id!);
+                    setEditValue(String(infoData.value ?? ""));
+                    setEditDate(infoData.date);
+                    setEditUnits(infoData.units || "");
+                    setEditName(infoData.indicatorName);
+                    setEditModalOpen(true);
+                    setInfoOpen(false);
+                  }}
+                >
+                  Редактировать
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!window.confirm("Удалить это измерение?")) return;
+                    try {
+                      await axios.delete(`${API.PERSON_MEASURES(personId)}/${infoData.id}`);
+                      const ms = await axios.get(API.PERSON_MEASURES(personId));
+                      const arr: GroupBlock[] = Array.isArray(unwrap(ms.data)) ? unwrap(ms.data) : [];
+                      setBlocks(arr);
+                      closeInfo();
+                    } catch (err) {
+                      console.error(err);
+                      alert("Ошибка при удалении измерения");
+                    }
+                  }}
+                >
+                  Удалить
+                </button>
+              </div>
+            )}
           </div>
         </>
       )}
 
-
-      {/* Зоны сброса для DnD */}
-      {showDropZones && (
-        <>
-          <div
-            style={{ ...zoneLeft, ...(dropTarget === "edit" ? zoneActive : {}) }}
-            onDragOver={(e) => handleZoneDragOver(e, "edit")}
-            onDrop={() => handleZoneDrop("edit")}
-          >
-            ✎ Редактировать
+      {/* Модалка: добавить группу в ленту */}
+      {showAddGroup && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3 className="modal-title">Добавить группу</h3>
+            {missingGroups.length === 0 ? (
+              <p>Все группы уже добавлены.</p>
+            ) : (
+              <div className="modal-group-list">
+                {missingGroups.map((g) => (
+                  <button
+                    key={g.groupName}
+                    onClick={() => {
+                      setExtraGroups(prev => {
+                        const next = [...prev, g.groupName];
+                        setShowAddGroup(false);
+                        // после применения состояния — вычислим индекс и выберем вкладку
+                        setTimeout(() => {
+                          const allNames = [
+                            ...blocks.map(b => b.groupName),
+                            ...next,
+                          ];
+                          const idx = allNames.findIndex(n => n === g.groupName);
+                          setGroupIndex(idx >= 0 ? idx : 0);
+                        }, 0);
+                        return next;
+                      });
+                    }}
+                  >
+                    {g.groupName}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="modal-actions">
+              <button onClick={() => setShowAddGroup(false)}>Закрыть</button>
+            </div>
           </div>
-          <div
-            style={{ ...zoneRight, ...(dropTarget === "delete" ? zoneActive : {}) }}
-            onDragOver={(e) => handleZoneDragOver(e, "delete")}
-            onDrop={() => handleZoneDrop("delete")}
-          >
-            🗑 Удалить
-          </div>
-        </>
+        </div>
       )}
 
       {/* Модалка редактирования */}
       {editModalOpen && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <form onSubmit={handleEditSubmit}>
-              <h3 style={{ marginTop: 0 }}>Редактировать</h3>
-
-              {/* Имя индикатора только для показа */}
-              <div style={{ marginBottom: 8, fontWeight: 600, opacity: 0.8 }}>
-                Индикатор: {editName}
-              </div>
-
+            <form className="form-redact" onSubmit={handleEditSubmit}>
+              <h3 className="modal-title">Редактировать</h3>
+              <div className="modal-subtitle">Индикатор: {editName}</div>
               <FloatingTextInput
                 id="editValue"
                 type="number"
@@ -666,7 +627,6 @@ export default function Person() {
                 value={editValue}
                 onChange={(e) => setEditValue(e.target.value)}
               />
-
               <FloatingTextInput
                 id="editDate"
                 type="date"
@@ -674,20 +634,20 @@ export default function Person() {
                 value={editDate}
                 onChange={(e) => setEditDate(e.target.value)}
               />
-
-              <FloatingTextInput
+              <FloatingSelect
                 id="editUnits"
-                type="text"
                 label="Единицы"
                 value={editUnits}
                 onChange={(e) => setEditUnits(e.target.value)}
+                options={
+                  (indicatorOptions.find(o => o.name === editName)?.units ?? [])
+                    .map((u) => ({ value: u, label: u }))
+                }
               />
 
-              <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <div className="modal-actions" style={{ marginTop: 12 }}>
                 <button type="submit">Сохранить</button>
-                <button type="button" onClick={() => setEditModalOpen(false)}>
-                  Отмена
-                </button>
+                <button type="button" onClick={() => setEditModalOpen(false)}>Отмена</button>
               </div>
             </form>
           </div>
@@ -696,4 +656,3 @@ export default function Person() {
     </div>
   );
 }
-
