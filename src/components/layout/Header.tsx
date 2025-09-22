@@ -1,14 +1,15 @@
 import "../../styles/layout.css";
+import Dialog from "../../assets/Dialog.svg";
 
 export default function Header() {
   return (
     <header className="header">
       <div className="header__search">
-        <input type="text" placeholder="Поиск..." />
+        
       </div>
       <div className="header__right">
-        <span className="header__bell">🔔</span>
-        <span className="header__user">👤 Имя Пользователя</span>
+        <img src={Dialog} alt="" />
+        <span className="header__user" title="Профиль"> Имя Пользователя</span>
       </div>
     </header>
   );

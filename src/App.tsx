@@ -19,6 +19,9 @@ export default function App() {
             <Route path="trans_indicat" element={<Trans_Indicat />} />
             <Route path="units_reasons" element={<Units_Reasons />} />
           </Route>
+
+          {/* редирект на /people по умолчанию */}
+          <Route path="*" element={<Navigate to="/people" replace />} />
         </Routes>
       </Layout>
     </Router>

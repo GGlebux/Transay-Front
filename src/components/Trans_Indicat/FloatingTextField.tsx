@@ -73,7 +73,7 @@ export function FloatingSelect({
         onChange={onChange}
         className={`text-field__input ${inputClass}`}
       >
-        <option value=""> </option>
+        
         {options.map((o, i) => (
   <option
     key={`${String((o as any).value)}-${i}`}

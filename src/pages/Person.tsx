@@ -5,6 +5,10 @@ import axios from "axios";
 import { API } from "../apiConfig";
 import { FloatingTextInput, FloatingSelect } from "../components/Trans_Indicat/FloatingTextField";
 import "../styles/person.css";
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
+
+
+
 
 /* ---------- Типы ---------- */
 type Reason = { id: number; name: string };
@@ -74,6 +78,36 @@ export default function Person() {
   const [date, setDate] = useState(todayISO());
   const [saving, setSaving] = useState(false);
 
+  
+
+useEffect(() => {
+  if (id) {
+    localStorage.setItem("lastPersonId", id);
+  }
+}, [id]);
+
+const [decryptDate, setDecryptDate] = useState("");
+const [decryptData, setDecryptData] = useState<any | null>(null);
+const [loadingDecrypt, setLoadingDecrypt] = useState(false);
+
+const handleDecrypt = async () => {
+  if (!decryptDate) return;
+  setLoadingDecrypt(true);
+  try {
+    const { data } = await axios.get(
+      `${API.PEOPLE}/${personId}/measures/decrypt?date=${decryptDate}`
+    );
+    setDecryptData(data);
+  } catch (e) {
+    console.error(e);
+    alert("Ошибка при загрузке расшифровки");
+  } finally {
+    setLoadingDecrypt(false);
+  }
+};
+
+const COLORS = ["#0b74ff", "#ff7300", "#82ca9d", "#ff4560", "#775dd0"];
+
   // ------ Инфо-панель (оверлей сверху) ------
   const [infoOpen, setInfoOpen] = useState(false);
   const [infoData, setInfoData] = useState<{
@@ -119,6 +153,9 @@ export default function Person() {
   const [editDate, setEditDate] = useState<string>(todayISO());
   const [editUnits, setEditUnits] = useState<string>("");
   const [editName, setEditName] = useState<string>("");
+
+
+
 
   // Загрузка данных
   useEffect(() => {
@@ -297,6 +334,17 @@ export default function Person() {
     }
   };
 
+  const formatDate = (iso: string) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = String(d.getFullYear()).slice(-2);
+  return `${day}.${month}.${year}`;
+};
+
+
   // Пагинация по столбцам
   const columnsForPage = useMemo(() => {
     return groupDates.slice(currentPage * columnsPerPage, (currentPage + 1) * columnsPerPage);
@@ -362,14 +410,17 @@ export default function Person() {
     }
   };
 
-  if (loading) return <p>Загрузка...</p>;
+  if (loading) {
+  return (
+    <div className="loading-screen">
+      <div className="spinner"></div>
+      <p>Загрузка...</p>
+    </div>
+  );
+}
 
   return (
     <div className="person-page">
-      <div className="person-header">
-        <Link to="/people" className="back-link">← Назад к списку</Link>
-        <h1>{person?.name ?? `Person #${personId}`}</h1>
-      </div>
 
       {/* Лента групп с обрезанием и стрелками */}
       <div className="tabs-bar-wrap">
@@ -378,6 +429,16 @@ export default function Person() {
         )}
         <div className="tabs-viewport">
           <div className="tabs-row" ref={tabsRef}>
+            {missingGroups.length > 0 && (
+              <button
+                type="button"
+                className="plus-btn"
+                onClick={() => setShowAddGroup(true)}
+                title="Добавить группу"
+              >
+                +
+              </button>
+            )}
             {displayGroups.map((g, i) => (
               <button
                 key={g.groupName || i}
@@ -389,16 +450,6 @@ export default function Person() {
                 {g.groupName || `Группа ${i + 1}`}
               </button>
             ))}
-            {missingGroups.length > 0 && (
-              <button
-                type="button"
-                className="plus-btn"
-                onClick={() => setShowAddGroup(true)}
-                title="Добавить группу"
-              >
-                +
-              </button>
-            )}
           </div>
         </div>
         {canScrollRight && (
@@ -415,19 +466,19 @@ export default function Person() {
           onChange={(e) => setIndicatorKey(e.target.value)}
           options={optionsForCurrentGroup.map((o) => ({ value: o.key, label: o.label }))} /* ← без имени группы */
         />
+        <FloatingTextInput
+          id="value"
+          type="number"
+          label="Значение"
+          value={value} 
+          onChange={(e) => setValue(e.target.value)}
+        />
         <FloatingSelect
           id="units"
           label="Единицы"
           value={unit}
           onChange={(e) => setUnit(e.target.value)}
           options={(indicatorOptions.find(o => o.key === indicatorKey)?.units ?? []).map((u) => ({ value: u, label: u }))}
-        />
-        <FloatingTextInput
-          id="value"
-          type="number"
-          label="Значение"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
         />
         <FloatingTextInput
           id="date"
@@ -448,7 +499,7 @@ export default function Person() {
             <tr>
               <th className="sticky-col">{current.groupName || "Индикатор"}</th>
               {columnsForPage.map((d) => (
-                <th key={d}>{d}</th>
+                <th key={d}>{formatDate(d)}</th>
               ))}
             </tr>
           </thead>
@@ -510,6 +561,49 @@ export default function Person() {
           Вперед
         </button>
       </div>
+      <div className="decrypt-section">
+  <h3>Расшифровка по дате</h3>
+  <div className="decrypt-controls">
+    <input
+      type="date"
+      value={decryptDate}
+      onChange={(e) => setDecryptDate(e.target.value)}
+    />
+    <button onClick={handleDecrypt} disabled={loadingDecrypt}>
+      {loadingDecrypt ? "Загрузка..." : "Расшифровать"}
+    </button>
+  </div>
+
+  {decryptData && (
+    <div className="decrypt-chart">
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={Object.entries(decryptData).map(([key, val]: any) => ({
+              name: key,
+              value: val.percentage,
+            }))}
+            dataKey="value"
+            cx="50%"
+            cy="50%"
+            outerRadius={100}
+            label
+          >
+            {Object.entries(decryptData).map((_, index) => (
+              <Cell
+                key={`cell-${index}`}
+                fill={COLORS[index % COLORS.length]}
+              />
+            ))}
+          </Pie>
+          <Tooltip />
+          <Legend />
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
+  )}
+</div>
+
 
       {/* Инфо-панель (с редактированием и удалением) */}
       {infoOpen && infoData && (
@@ -519,8 +613,9 @@ export default function Person() {
             <button aria-label="Закрыть" className="info-close" onClick={closeInfo}>×</button>
             <h3 className="info-title">Информация</h3>
             <div className="info-row"><b>Индикатор:</b> {infoData.indicatorName}</div>
-            <div className="info-row"><b>Дата:</b> {infoData.date}</div>
+            <div className="info-row"><b>Дата:</b> {formatDate(infoData.date)}</div>
             <div className="info-row"><b>Значение:</b> {infoData.value} {infoData.units}</div>
+            
             {infoData.min != null && <div className="info-row"><b>Мин значение:</b> {infoData.min} {infoData.units}</div>}
             {infoData.max != null && <div className="info-row"><b>Макс значение:</b> {infoData.max} {infoData.units}</div>}
             {infoData.reasons?.length ? (
@@ -610,8 +705,9 @@ export default function Person() {
               <button onClick={() => setShowAddGroup(false)}>Закрыть</button>
             </div>
           </div>
-        </div>
+        </div>  
       )}
+
 
       {/* Модалка редактирования */}
       {editModalOpen && (

@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { API } from "../apiConfig";
 import "../styles/people.css";
+import Pen from "../assets/Pen.svg";
+import Trash from "../assets/Trash.svg";
 
 type Person = {
   id: number;
@@ -26,7 +28,7 @@ function extractName(raw: unknown): string {
     try {
       const j = JSON.parse(s);
       if (j && typeof j.name === "string") return j.name;
-    } catch {}
+    } catch { }
   }
   return s;
 }
@@ -136,7 +138,16 @@ export default function People() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (loading) return <p>Загрузка...</p>;
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr; // если бекенд вернул кривую дату
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = String(d.getFullYear()).slice(-2); // последние 2 цифры
+    return `${day}.${month}.${year}`;
+  };
 
   const filteredPeople = people.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
@@ -204,6 +215,15 @@ export default function People() {
     setModalOpen(true);
   };
 
+  if (loading) {
+    return (
+      <div className="loading-screen">
+        <div className="spinner"></div>
+        <p>Загрузка...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="people-container">
       <div className="people-header">
@@ -215,7 +235,7 @@ export default function People() {
           className="people-search"
         />
         <button onClick={openModalForCreate} className="people-add-btn">
-          Create
+          Создать +
         </button>
       </div>
 
@@ -223,28 +243,38 @@ export default function People() {
         <table className="people-table">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Date of Birth</th>
-              <th>Age</th>
-              <th>Gender</th>
-              <th>Is Gravid</th>
-              <th>Actions</th>
+              <th>Имя</th>
+              <th>Дата рождения</th>
+              <th>Возраст</th>
+              <th>Гендер</th>
+              <th>Беременость</th>
+              <th>Действия</th>
             </tr>
           </thead>
           <tbody>
             {filteredPeople.map((p) => (
               <tr key={p.id}>
-                <td><Link to={`/person/${p.id}`}>{p.name}</Link></td>
-                <td>{p.dateOfBirth}</td>
+                <td>
+                  <Link
+                    to={`/person/${p.id}`}
+                    onClick={() => {
+                      localStorage.setItem("lastPersonId", String(p.id));
+                    }}
+                  >
+                    {p.name}
+                  </Link>
+                </td>
+
+                <td>{formatDate(p.dateOfBirth)}</td>
                 <td>{calcAge(p.dateOfBirth)}</td>
                 <td>{p.gender}</td>
                 <td>{p.isGravid ? "Yes" : "No"}</td>
-                <td>
+                <td >
                   <button onClick={() => openModalForEdit(p)} className="edit-btn">
-                    ✎
+                    <img src={Pen} className="pen-btn-edit" alt="" />
                   </button>
                   <button onClick={() => handleDelete(p)} className="delete-btn">
-                    🗑
+                    <img src={Trash} className="trash-btn-edit" alt="" />
                   </button>
                 </td>
               </tr>
@@ -266,7 +296,7 @@ export default function People() {
             <h3>{editingPerson ? "Редактировать человека" : "Создать человека"}</h3>
 
             <label>
-              Name:
+              Имя:
               <input
                 type="text"
                 value={formData.name}
@@ -275,7 +305,7 @@ export default function People() {
             </label>
 
             <label>
-              Date of Birth:
+              Дата рождения:
               <input
                 type="date"
                 value={formData.dateOfBirth}
@@ -284,21 +314,21 @@ export default function People() {
             </label>
 
             <label>
-              Gender:
+              Гендер:
               <select
                 value={formData.gender}
                 onChange={(e) =>
                   setFormData({ ...formData, gender: e.target.value as Person["gender"] })
                 }
               >
-                <option value="male">male</option>
-                <option value="female">female</option>
-                <option value="both">both</option>
+                <option value="male">Мужчина</option>
+                <option value="female">Женщина</option>
+                <option value="both">Оба</option>
               </select>
             </label>
 
             <label>
-              Is Gravid:
+              Беремена:
               <input
                 type="checkbox"
                 checked={formData.gender === "female" && formData.isGravid}

@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap');
+
 /* Сброс базовых отступов */
 * {
   margin: 0;
@@ -33,11 +35,18 @@
   flex-wrap: wrap;
 }
 
+
+
+.nunito {
+  font-family: "Nunito", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+}
+
 /* Сайдбар */
 .sidebar {
   width: 220px;
   background: var(--sidebar-bg);
-  border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   padding: 1rem;
@@ -45,51 +54,111 @@
 }
 
 .sidebar__logo {
-  font-weight: bold;
-  font-size: 1.2rem;
+  text-align: center;
+  font-size: 1.6rem;
   margin-bottom: 2rem;
   color: var(--primary-color);
+  letter-spacing: 1px;
 }
 
 .sidebar ul {
   list-style: none;
+  padding-left: 0;
 }
 
 .sidebar li {
   margin: 0.5rem 0;
 }
 
-.sidebar a {
-  display: block;
+.sidebar a,
+.sidebar-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
   text-decoration: none;
   color: var(--text-color);
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
   transition: background 0.2s, color 0.2s;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font: inherit;
 }
 
-.sidebar a.active {
+.sidebar a.active,
+.sidebar-toggle.open {
   background-color: var(--hover-bg);
   color: var(--primary-color);
 }
 
-
-.sidebar a:hover {
+.sidebar a:hover,
+.sidebar-toggle:hover {
   background-color: var(--hover-bg);
   color: var(--primary-color);
 }
+
+.menu-icon {
+  font-size: 1.1rem;
+}
+
+/* Стрелка */
+.arrow-icon {
+  margin-left: auto;
+  width: 24px;
+  height: 24px;
+  transition: transform 0.5s ease;
+}
+
+.arrow-icon.rotated {
+  transform: rotate(90deg); /* или 180deg если хочешь вниз */
+}
+
+
+/* Подменю */
+.submenu {
+
+  margin: 6px 0 0 20px;
+  padding-left: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s ease;
+}
+
+.submenu.open {
+  max-height: 200px; /* достаточно для двух пунктов */
+
+}
+
+.submenu li {
+  margin: 4px 0;
+}
+
 
 /* Header */
 .header {
   height: 60px;
   background: var(--header-bg);
-  border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 1rem;
   color: var(--primary-color);
   font-weight: 500;
+}
+.header__right {
+  display: flex;
+  gap: 10px;
+  
+}
+
+.header__search input {
+  padding: 6px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  outline: none;
+  transition: border 0.2s, box-shadow 0.2s;
 }
 
 /* Основная область контента */
@@ -100,7 +169,7 @@
 }
 
 .layout__content {
-  padding: 1.5rem;
+  padding: rem;
   flex: 1;
   background-color: var(--background-color);
   overflow-y: auto;
