@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import type { FormEvent } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import axios from "axios";
 import { API } from "../apiConfig";
 import { FloatingTextInput, FloatingSelect } from "../components/Trans_Indicat/FloatingTextField";
@@ -53,7 +53,7 @@ export default function Person() {
   const { id } = useParams<{ id: string }>();
   const personId = id!;
 
-  const [person, setPerson] = useState<PersonInfo | null>(null);
+  const [, setPerson] = useState<PersonInfo | null>(null);
   const [blocks, setBlocks] = useState<GroupBlock[]>([]);
   const [loading, setLoading] = useState(true);
 
